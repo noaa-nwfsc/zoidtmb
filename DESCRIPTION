@@ -34,17 +34,14 @@ Authors@R:
            comment = c(ORCID = "0000-0003-1326-0840")))
 Description: Fits Dirichlet regression and zero-and-one inflated Dirichlet regression with Bayesian methods implemented in Stan. These models are sometimes referred to as trinomial mixture models; covariates and overdispersion can optionally be included.
 License: GPL (>=3)
-URL: https://ericward-noaa.github.io/zoidtmb, https://github.com/ericward-noaa/zoidtmb
+URL: https://nwfsc-cb.github.io/zoidtmb/, https://github.com/nwfsc-cb/zoidtmb/issues
 Depends: 
     R (>= 4.0.0)
 Imports:
-    dplyr,
-    ggplot2,
-    gnorm,
-    methods,
+    gtools,
     stats,
     TMB (>= 1.7.20),
-    nlme
+    Rcpp
 Suggests:
     testthat,
     knitr,
