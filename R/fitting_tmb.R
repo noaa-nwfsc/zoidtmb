@@ -12,33 +12,28 @@
 #' @param prior_sd Optional prior sd / penalty for fixed effects
 #' @export
 #' @import Rcpp
+#' @importFrom stats model.frame
 #'
 #' @examples
 #' \donttest{
-y <- matrix(c(3.77, 6.63, 2.60, 0.9, 1.44, 0.66, 2.10, 3.57, 1.33),
-  nrow = 3, byrow = TRUE
-)
-# #fit a model with no covariates
-# fit <- fit_zoidTMB(data_matrix = y)
+#  #y <- matrix(c(3.77, 6.63, 2.60, 0.9, 1.44, 0.66, 2.10, 3.57, 1.33),
+#  #            nrow = 3, byrow = TRUE
+#  #)
+#  #fit a model with no covariates
+#  #fit <- fit_zoidTMB(data_matrix = y)
 #'
 #' # fit a model with 1 factor
-#' design <- data.frame("fac" = c("spring", "spring", "fall"))
-#' fit <- fit_zoidTMB(formula = ~fac, design_matrix = design, data_matrix = y)
+#' #design <- data.frame("fac" = c("spring", "spring", "fall"))
+#' #fit <- fit_zoidTMB(formula = ~fac, design_matrix = design, data_matrix = y)
 #'
-#' # try a model with random effects
-#' set.seed(123)
-#' y <- matrix(runif(99,1,4), ncol=3)
-#' design <- data.frame("fac" = sample(letters[1:5], size=nrow(y), replace=TRUE))
-#' design$fac <- as.factor(design$fac)
-#' fit <- fit_zoidTMB(formula = ~(1|fac), design_matrix = design, data_matrix = y)
 #' }
 #'
 fit_zoidTMB <- function(formula = NULL,
-                         design_matrix,
-                         data_matrix,
-                         overdispersion = FALSE,
-                         overdispersion_sd = 5,
-                         prior_sd = NA) {
+                        design_matrix,
+                        data_matrix,
+                        overdispersion = FALSE,
+                        overdispersion_sd = 5,
+                        prior_sd = NA) {
 
   # if a single observation
   if (class(data_matrix)[1] != "matrix") {
@@ -99,43 +94,44 @@ fit_zoidTMB <- function(formula = NULL,
     overdispersion_sd = overdispersion_sd,
     use_prior_sd = use_prior_sd,
     prior_sd = sd_prior,
-    design_Z = parsed_res$design_matrix, # design matrix for Z (random int)
+    #design_Z = parsed_res$design_matrix, # design matrix for Z (random int)
     re_var_indx = c(parsed_res$var_indx, 1) - 1L, # index of the group for each re
     #n_re_by_group = c(parsed_res$n_re_by_group, 1), # number of random ints per group
-    tot_re = tot_re, # total number of random ints, across all groups
+    #tot_re = tot_re, # total number of random ints, across all groups
     n_groups = n_groups,
     est_re = as.numeric(est_re)
   )
 
   # estimated parameters from TMB.
   # beta is included in all models
-  # zeta_sds and zeta_raw are only in random effects models
+  # zeta_sds and zeta_vec are only in random effects models
   # phi_inv is only in overdispersion model
   tmb_pars <- list(beta_raw = matrix(0, N_bins-1, N_covar),
-                   log_phi_inv = 0,
-                   log_zeta_sds = rep(0, n_groups),
-                   zeta_raw = matrix(0, N_bins - 1, tot_re))
+                   log_phi_inv = 0)
+                   #log_zeta_sds = rep(0, n_groups),
+                   #zeta_vec = rep(0, (N_bins - 1) * tot_re))
 
   tmb_map <- c()
   if(overdispersion == FALSE) {
     tmb_map <- c(tmb_map, list(log_phi_inv = as.factor(NA)))
   }
 
-  random <- "zeta_raw"
-  if(est_re == FALSE) {
-    random <- NULL
-    tmb_map <- c(tmb_map, list(log_zeta_sds = as.factor(rep(NA, n_groups)),#log_zeta_sds = as.factor(rep(NA, n_groups)),
-                               zeta_raw = matrix(NA, N_bins - 1, tot_re)))
-    tmb_map$zeta_raw <- as.factor(tmb_map$zeta_raw)
-  }
+  #random <- "zeta_vec"
+  #if(est_re == FALSE) {
+  #  random <- NULL
+    #tmb_map <- c(tmb_map,
+    #             list(z = rep(as.factor(NA), (N_bins - 1) * tot_re)))
+    #tmb_map <- c(tmb_map, list(log_zeta_sds = as.factor(rep(NA, n_groups)),#log_zeta_sds = as.factor(rep(NA, n_groups)),
+    #                           zetavec = as.factor(rep(NA, (N_bins - 1) * tot_re))))
+  #}
 
   obj <- TMB::MakeADFun(
     data = tmb_data,
     parameters = tmb_pars,
     map = tmb_map,
     DLL = "zoidtmb",
-    random = random,
-    silent = FALSE
+    random = NULL,
+    silent = TRUE
   )
 
   pars <- stats::nlminb(
@@ -147,10 +143,16 @@ fit_zoidTMB <- function(formula = NULL,
 
   mod_list <- list(pars = pars, sdreport = sdreport,
                    tmb_data = tmb_data, tmb_map = tmb_map,
-                   tmb_random = random, tmb_parameters = tmb_pars)
+                   #tmb_random = random,
+                   tmb_parameters = tmb_pars)
+
+  # tidy the mu and beta vectors
+  idx <- grep("mu", names(sdreport$value))
+  mod_list$mu <- matrix(sdreport$value[idx], nrow=nrow(data_matrix))
+  mod_list$mu_se <- matrix(sdreport$sd[idx], nrow=nrow(data_matrix))
+
   return(mod_list)
 }
-
 
 #' Fit a trinomial mixture model that optionally includes covariates to estimate
 #' effects of factor or continuous variables on proportions.
