@@ -1,77 +1,42 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# phenomix
+## zoidtmb
 
-R package for fitting distributions to run timing data via maximum
-likelihood
+`zoidtmb` is an implementation of the `zoid` package in TMB, using
+marginal maximum likelihood instead of Bayesian estimation. This may be
+particularly useful for datasets with large dimensions.
 
-[![R build
-status](https://github.com/ericward-noaa/phenomix/workflows/R-CMD-check/badge.svg)](https://github.com/ericward-noaa/phenomix/actions)
-
-[![DOI](https://zenodo.org/badge/243336401.svg)](https://zenodo.org/badge/latestdoi/243336401)
-pkgdown site: <https://ericward-noaa.github.io/phenomix/>
-
-## Installation
-
-You can install phenomix with:
+The syntax of fitting models matches `zoid`, and can be done with
 
 ``` r
-remotes::install_github("ericward-noaa/phenomix",build_vignettes = TRUE)
+fit <- fit_zoidTMB(formula = formula, # required formula
+                   design_matrix = design_matrix, # optional covariates
+                   data_matrix = data.matrix, # required data matrix
+                   overdispersion = FALSE, # optional estimated overdispersion
+                   overdispersion_sd = 5, # optional penalty/prior on overdispersion
+                   prior_sd = NA) # optional prior/penalty on fixed effects 
 ```
 
-Load libraries
+Parameter estimates and uncertainty can be extracted from
 
 ``` r
-library(phenomix)
-library(ggplot2)
+fit$sdreport
 ```
 
-## Functions
+Derived quantities (means) are provided with `fit$mu` and uncertainties
+`fit$mu_se`.
 
-The package pheomix provides a suite of curve fitting to describe data
-that may be generated from a process when distributions in time might be
-concentrated (from fisheries, this occurs with counts over time of
-salmon returning from the ocean to spawn or juvenile fish emigrating
-from streams to the ocean).
+For additional details, see the documentation for `zoid`,
+(<https://github.com/nwfsc-cb/zoid/tree/main>)
 
-![Predicted (black line) and observed counts (red dots) for hypothetical
-dataset. Multiple observations may exist for some days, or no
-observations on others.](README-figs/unnamed-chunk-5-1.png)
+## How to cite
 
-In a given year, the curve might be described by a symmetric or
-asymmetric Gaussian or Student-t distribution (shown here in log-scale
-on the y-axis). Questions of interest might be - are the means (x-axis)
-shifting through time? - are the variances shifting through time? - does
-the model support a symmetric or asymmetric distribution?
-
-![](man/figures/unnamed-chunk-6-1.png)<!-- -->
-
-## Examples
-
-The main functions are `create_data()` and `fit()`. See `?create_data`
-and `?fit` for additional details and examples. A vignette includes
-additional detail, and examples of several models as well as function
-arguments available <https://ericward-noaa.github.io/phenomix/>.
-
-## References
-
-For description of fisheries applications of asymmetric models:
-
-Methot, R.D. 2000. Technical description of the stock synthesis
-assessment program. U.S. Dept. Commer., NOAA Tech. Memo. NMFS-NWFSC-43,
-46
-p. [link](https://repository.library.noaa.gov/view/noaa/3172/noaa_3172_DS1.pdf)
-
-For statistical background of asymmetric models:
-
-Rubio, F.J. and Steel, M.F.J. 2020. The family of two-piece
-distributions. Significance, 17(1) 120–13.
-[link](https://rss.onlinelibrary.wiley.com/doi/full/10.1111/j.1740-9713.2020.01352.x)
-
-Wallis, K.F. 2014. The two-piece normal, binormal, or double Gaussian
-distribution: Its origin and rediscoveries. Statistical Science, 29(1),
-106–112. [link](https://arxiv.org/abs/1405.4995)
+Jensen, Alexander J., Ryan P. Kelly, Eric C. Anderson, William H.
+Satterthwaite, Andrew Olaf Shelton, and Eric J. Ward. 2022. “
+Introducing Zoid: A Mixture Model and R Package for Modeling
+Proportional Data with Zeros and Ones in Ecology.” Ecology 103(11):
+e3804. <https://doi.org/10.1002/ecy.3804>
 
 ## NOAA Disclaimer
 
